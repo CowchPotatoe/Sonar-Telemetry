@@ -32,7 +32,7 @@ void initTimer0();
 void initUART();
 unsigned char getChar();
 void putChar(unsigned char c);
-void printString(unsigned char *s);
+void printString(char *s);
 void printInHex(uint8_t byte);
 void printNibble(uint8_t nibble);
 
@@ -41,6 +41,7 @@ int main(void)
     initIO();
     initUART();
     initTimer0();
+    uint8_t angle;
 
     while (1) {
         // Move from 0 degrees to 180 degrees
@@ -49,9 +50,9 @@ int main(void)
 			// Convert OCR0A position to actual servo angle
             angle = ((position - DEGREE0) * 180) / (DEGREE180 - DEGREE0);
 
-            printString((unsigned char *)"Angle: ");
+            printString("Angle: ");
             printNumber(angle);
-            printString((unsigned char *)"\r\n");
+            printString("\r\n");
 
             _delay_ms(100);
         }
@@ -61,9 +62,9 @@ int main(void)
 			// Convert OCR0A position to actual servo angle
             angle = ((position - DEGREE0) * 180) / (DEGREE180 - DEGREE0);
 
-            printString((unsigned char *)"Angle: ");
+            printString("Angle: ");
             printNumber(angle);
-            printString((unsigned char *)"\r\n");
+            printString("\r\n");
             _delay_ms(100);
         }
     }
@@ -96,7 +97,7 @@ void putChar(unsigned char c) {
     UCSR0A |= (1 << TXC0);
 }
 
-void printString(unsigned char *s) {
+void printString(char *s) {
     unsigned char i = 0;
     while (s[i]) {
         putChar(s[i]);
@@ -114,26 +115,6 @@ void initTimer0() {
     TCCR0A |= (1 << WGM01) | (1 << WGM00);      // Fast PWM mode
     TCCR0B |= (1 << CS02) | (1 << CS00);        // Prescaler = 1024
     TCNT0 = 0;
-}
-
-void printInHex(uint8_t byte) {
-    unsigned char nibble;
-    nibble = (byte >> 4) & 0xF;
-    printNibble(nibble);
-    nibble = byte & 0xF;
-    printNibble(nibble);
-}
-
-void printNibble(uint8_t nibble) {
-    unsigned char printchar;
-    if (nibble > 9) {
-        printchar = nibble + 55;
-        putChar(printchar);
-    }
-    else {
-        printchar = nibble + 48;
-        putChar(printchar);
-    }
 }
 
 void printNumber(uint8_t number) {
