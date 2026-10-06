@@ -15,8 +15,6 @@
 // 800 us: OCR0A = 13
 // 1500 us: OCR0A = 23
 // 2200 us: OCR0A = 34
-
-#define F_CPU 16000000
 #define BAUD 9600
 
 #include <avr/io.h>
@@ -33,8 +31,7 @@ void initUART();
 unsigned char getChar();
 void putChar(unsigned char c);
 void printString(char *s);
-void printInHex(uint8_t byte);
-void printNibble(uint8_t nibble);
+void printNumber(uint8_t number);
 
 int main(void)
 {

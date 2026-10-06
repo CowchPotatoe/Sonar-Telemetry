@@ -1,18 +1,19 @@
-#include <Arduino.h>
+#include <stdint.h>
+#include "UltrasonicSenor.h"
+#include "Servo.h"
 
-// put function declarations here:
-int myFunction(int, int);
+int main(void)
+{
+    uint32_t distance;
 
-void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
-}
+    // Initialize the servo
+    initServo();
 
-void loop() {
-  // put your main code here, to run repeatedly:
-}
+    while (1)
+    {
+        // Get distance from ultrasonic sensor
+        distance = getDistance();
+    }
 
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
+    return 0;
 }
