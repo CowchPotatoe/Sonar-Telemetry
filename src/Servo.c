@@ -21,6 +21,7 @@
 #include <stdint.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
+#include "Servo.h"
 
 #define DEGREE0 13
 #define DEGREE180 34
@@ -30,41 +31,24 @@ void initTimer0();
 void initUART();
 unsigned char getChar();
 void putChar(unsigned char c);
-void printString(char *s);
-void printNumber(uint8_t number);
 
-int main(void)
+void initServo()
 {
     initIO();
     initUART();
     initTimer0();
-    uint8_t angle;
+}
 
-    while (1) {
-        // Move from 0 degrees to 180 degrees
-        for (uint8_t position = DEGREE0; position <= DEGREE180; position++) {
-            OCR0A = position;
-			// Convert OCR0A position to actual servo angle
-            angle = ((position - DEGREE0) * 180) / (DEGREE180 - DEGREE0);
+void setServoAngle(uint8_t angle)
+{
+    OCR0A = DEGREE0 + ((uint16_t)angle * (DEGREE180 - DEGREE0)) / 180;
+}
 
-            printString("Angle: ");
-            printNumber(angle);
-            printString("\r\n");
-
-            _delay_ms(100);
-        }
-        // Move from 180 degrees back to 0 degrees
-        for (uint8_t position = DEGREE180; position >= DEGREE0; position--) {
-            OCR0A = position;
-			// Convert OCR0A position to actual servo angle
-            angle = ((position - DEGREE0) * 180) / (DEGREE180 - DEGREE0);
-
-            printString("Angle: ");
-            printNumber(angle);
-            printString("\r\n");
-            _delay_ms(100);
-        }
-    }
+void printServoAngle(uint8_t angle)
+{
+    printString("Angle: ");
+    printNumber(angle);
+    printString("\r\n");
 }
 
 void initUART() {
@@ -94,7 +78,7 @@ void putChar(unsigned char c) {
     UCSR0A |= (1 << TXC0);
 }
 
-void printString(char *s) {
+void printString(const char *s) {
     unsigned char i = 0;
     while (s[i]) {
         putChar(s[i]);
@@ -114,17 +98,19 @@ void initTimer0() {
     TCNT0 = 0;
 }
 
-void printNumber(uint8_t number) {
-    if (number >= 100) {
-        putChar((number / 100) + '0');
-        putChar(((number / 10) % 10) + '0');
-        putChar((number % 10) + '0');
-    }
-    else if (number >= 10) {
-        putChar((number / 10) + '0');
-        putChar((number % 10) + '0');
-    }
-    else {
-        putChar(number + '0');
+void printNumber(uint32_t number)
+{
+    uint32_t divisor = 1000000000;
+    uint8_t started = 0;
+    while (divisor > 0)
+    {
+        uint8_t digit = number / divisor;
+        if (digit > 0 || started || divisor == 1)
+        {
+            putChar(digit + '0');
+            started = 1;
+        }
+        number %= divisor;
+        divisor /= 10;
     }
 }
