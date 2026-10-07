@@ -11,7 +11,7 @@ SERIAL_PORT = "/dev/ttyACM0"
 BAUD_RATE = 9600
 
 # Number of complete sweeps to receive
-MAX_SWEEPS = 2
+MAX_SWEEPS = 3
 
 # Open serial connection
 ser = serial.Serial(SERIAL_PORT, BAUD_RATE)
@@ -25,11 +25,17 @@ ser.reset_input_buffer()
 print("Connected to ATmega32PB")
 print("Waiting for telemetry...\n")
 
+# Send start command to ATmega
+ser.write(b"S\n")
+
 # Count complete sweeps
 sweeps = 0
 
 # Keep track of the previous angle
 previous_angle = None
+
+# Wait for the first angle of the sweep
+started = False
 
 angles = []
 distances = []
@@ -46,18 +52,34 @@ while sweeps < MAX_SWEEPS:
     line = ser.readline().decode("utf-8").strip()
 
     if line:
-        print(line)
         # Get the angle
         angle = int(line.split(",")[0].split(":")[1])
 
+        # Wait until the servo is at 0 degrees before recording data
+        if not started:
+            if angle != 0:
+                continue
+            started = True
+
+        print(line)
+
         distance = int(line.split(",")[1].split(":")[1])
-        angles.append(np.radians(angle))  # Convert angle to radians for polar plot
-        distances.append(distance)        # Append the distance into the array
+
+        # Do not append invalid distance measurements
+        if distance != 999:
+            angles.append(np.radians(angle))  # Convert angle to radians for polar plot
+            distances.append(distance)        # Append the distance into the array
 
         # A sweep is complete when the servo returns to 0 degrees.
         if previous_angle == 5 and angle == 0:
             sweeps += 1
             print("Completed sweep:", sweeps)
+
+            # Stop after the requested number of sweeps
+            if sweeps == MAX_SWEEPS:
+                ser.write(b"X\n")
+                break
+
         previous_angle = angle
 
 # Close the serial connection
