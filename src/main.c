@@ -19,7 +19,7 @@ int main(void)
         for (uint8_t angle = 0; angle <= 180; angle += 5) {
             setServoAngle(angle);
             // Wait for the servo to reach the new position
-            _delay_ms(50);
+            _delay_ms(100);
             // Check for stop command from Python
             if (charAvailable() && getChar() == 'X') {
                 return 0;
@@ -38,7 +38,7 @@ int main(void)
         for (int16_t angle = 180; angle >= 0; angle -= 5) {
             setServoAngle(angle);
             // Wait for the servo to reach the new position
-            _delay_ms(50);
+            _delay_ms(100);
             // Check for stop command from Python
             if (charAvailable() && getChar() == 'X') {
                 return 0;

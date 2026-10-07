@@ -25,6 +25,9 @@ ser.reset_input_buffer()
 print("Connected to ATmega32PB")
 print("Waiting for telemetry...\n")
 
+# Stop first in case it was running
+ser.write(b"X\n")
+
 # Send start command to ATmega
 ser.write(b"S\n")
 
@@ -92,6 +95,14 @@ ax.scatter(angles, distances)
 # Set the limits for the polar plot
 ax.set_thetamin(0)
 ax.set_thetamax(180)
+
+# Display the number of completed sweeps at the bottom
+ax.text(
+    0.5, -0.15,
+    f"Sweeps: {sweeps}",
+    transform=ax.transAxes,
+    ha="center"
+)
 
 plt.show() # Keep the graph on the screen
 print("\nTelemetry stopped.")
