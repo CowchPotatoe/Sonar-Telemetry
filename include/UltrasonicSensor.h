@@ -1,5 +1,5 @@
-#ifndef ULTRASONIC_SENOR_H
-#define ULTRASONIC_SENOR_H
+#ifndef ULTRASONIC_SENSOR_H
+#define ULTRASONIC_SENSOR_H
 
 #include <stdint.h>
 

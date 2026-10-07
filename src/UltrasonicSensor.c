@@ -20,7 +20,7 @@
 
 #include <avr/io.h>
 #include <util/delay.h>     // Required for _delay_ms()
-#include "UltrasonicSenor.h"
+#include "UltrasonicSensor.h"
 
 uint32_t getDistance(void)
 {
