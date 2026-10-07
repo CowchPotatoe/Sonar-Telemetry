@@ -43,6 +43,12 @@ started = False
 angles = []
 distances = []
 
+# Telemetry statistics
+measurements = 0
+invalid_measurements = 0
+last_angle = 0
+last_distance = 0
+
 plt.ion() # Interactive mode so we can see plotting in real-time
 
 # Create a single polar plot for the sonar sweep
@@ -68,10 +74,17 @@ while sweeps < MAX_SWEEPS:
 
         distance = int(line.split(",")[1].split(":")[1])
 
+        # Keep track of the latest measurement
+        last_angle = angle
+        last_distance = distance
+        measurements += 1
+
         # Do not append invalid distance measurements
         if distance != 999:
             angles.append(np.radians(angle))  # Convert angle to radians for polar plot
             distances.append(distance)        # Append the distance into the array
+        else:
+            invalid_measurements += 1
 
         # A sweep is complete when the servo returns to 0 degrees.
         if previous_angle == 5 and angle == 0:
@@ -103,6 +116,21 @@ ax.text(
     transform=ax.transAxes,
     ha="center"
 )
+
+# Display final telemetry dashboard
+print("\n================================")
+print("       SONAR TELEMETRY")
+print("================================")
+print("Connection:    DISCONNECTED")
+print(f"Sweep:         {sweeps} / {MAX_SWEEPS}")
+print(f"Angle:         {last_angle}°")
+print(f"Distance:      {last_distance} cm")
+print(f"Measurements:  {measurements}")
+print(f"Invalid:       {invalid_measurements}")
+print(f"Minimum:       {min(distances)} cm")
+print(f"Maximum:       {max(distances)} cm")
+print(f"Average:       {sum(distances) / len(distances):.0f} cm")
+print("================================")
 
 plt.show() # Keep the graph on the screen
 print("\nTelemetry stopped.")
