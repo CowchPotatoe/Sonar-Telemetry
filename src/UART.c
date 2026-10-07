@@ -26,6 +26,10 @@ unsigned char getChar() {
     return c;
 }
 
+unsigned char charAvailable() {
+    return (UCSR0A & (1 << RXC0));
+}
+
 void putChar(unsigned char c) {
     UDR0 = c;
     while (!(UCSR0A & (1 << TXC0)));

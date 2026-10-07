@@ -20,6 +20,10 @@ int main(void)
             setServoAngle(angle);
             // Wait for the servo to reach the new position
             _delay_ms(50);
+            // Check for stop command from Python
+            if (charAvailable() && getChar() == 'X') {
+                return 0;
+            }
             // Get distance from ultrasonic sensor
             distance = getDistance();
             // Send angle and distance together
@@ -35,6 +39,10 @@ int main(void)
             setServoAngle(angle);
             // Wait for the servo to reach the new position
             _delay_ms(50);
+            // Check for stop command from Python
+            if (charAvailable() && getChar() == 'X') {
+                return 0;
+            }
             // Get distance from ultrasonic sensor
             distance = getDistance();
             // Send angle and distance together
