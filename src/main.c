@@ -2,6 +2,7 @@
 #include <util/delay.h>
 #include "UltrasonicSenor.h"
 #include "Servo.h"
+#include "UART.h"
 
 int main(void)
 {
