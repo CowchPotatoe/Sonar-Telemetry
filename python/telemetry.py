@@ -97,12 +97,16 @@ while sweeps < MAX_SWEEPS:
         last_angle = angle
         last_distance = distance
         measurements += 1
-        
-        # Do not append invalid distance measurements
-        if distance != 999:
+
+        # Record timestamp and validity for every measurement
+        elapsed_time = time.time() - start
+        valid = distance != 999
+        rows.append([round(elapsed_time, 3), sweeps + 1, angle, distance, valid])
+
+        # Do not plot invalid distance measurements
+        if valid:
             angles.append(np.radians(angle))  # Convert angle to radians for polar plot
             distances.append(distance)        # Append the distance into the array
-            rows.append([sweeps + 1, angle, distance])
         else:
             invalid_measurements += 1
 
@@ -117,6 +121,7 @@ while sweeps < MAX_SWEEPS:
                 break
 
         previous_angle = angle
+
 print(f"Ending time: {datetime.now().strftime('%H_%M_%S')}")
 print(f"Ending telemetry...\n")
 end = time.time()
@@ -139,20 +144,26 @@ ax.text(
     f"Sweeps: {sweeps}",
     transform=ax.transAxes,
     ha="center",
-    color = GREEN
+    color=GREEN
 )
 plt.tight_layout()  # Do not cutoff bottom text
 
-print(f"Export data to CSV and Images")
+print("Export data to CSV and Images")
 
 # Save the data to a CSV file
 filename = f"sonar_data_{datetime.now().strftime('%H_%M_%S')}.csv"
 with open(filename, mode='w', newline='') as file:
     writer = csv.writer(file)
-    writer.writerow(["Sweep", "Angle (degrees)", "Distance (cm)"])
+    writer.writerow([
+        "Elapsed Time (s)",
+        "Sweep",
+        "Angle (degrees)",
+        "Distance (cm)",
+        "Valid"
+    ])
     writer.writerows(rows)
 
-# Save the plot ass an image
+# Save the plot as an image
 pic_name = f"sonar_plot_{datetime.now().strftime('%H_%M_%S')}.png"
 plt.savefig(pic_name, bbox_inches="tight", facecolor=fig.get_facecolor())
 
@@ -166,9 +177,15 @@ print(f"Angle:         {last_angle}°")
 print(f"Distance:      {last_distance} cm")
 print(f"Measurements:  {measurements}")
 print(f"Invalid:       {invalid_measurements}")
-print(f"Minimum:       {min(distances)} cm")
-print(f"Maximum:       {max(distances)} cm")
-print(f"Average:       {sum(distances) / len(distances):.0f} cm")
+if distances:
+    print(f"Minimum:       {min(distances)} cm")
+    print(f"Maximum:       {max(distances)} cm")
+    print(f"Average:       {sum(distances) / len(distances):.0f} cm")
+else:
+    print("Minimum:       --")
+    print("Maximum:       --")
+    print("Average:       --")
+
 print(f"Time Elapsed:  {end - start:.1f} seconds")
 print("================================")
 
