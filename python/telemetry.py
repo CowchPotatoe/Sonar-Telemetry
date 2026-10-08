@@ -116,26 +116,24 @@ while sweeps < MAX_SWEEPS:
 ser.close()
 plt.ioff()
 
-# Plot the data on the polar plot
-ax.scatter(angles, distances)
-
 # Set the limits for the polar plot
 ax.set_thetamin(0)
 ax.set_thetamax(180)
+
+# Changes color of the points to green
+ax.scatter(angles, distances, s=90, color=GREEN, alpha=0.15)
+ax.scatter(angles, distances, s=15, color=GREEN)
 
 # Display the number of completed sweeps at the bottom
 ax.text(
     0.5, -0.15,
     f"Sweeps: {sweeps}",
     transform=ax.transAxes,
-    ha="center"
+    ha="center",
+    
 )
 plt.tight_layout()  # Do not cutoff bottom text
 
-# Changes color of the points to green
-ax.scatter(angles, distances, s=90, color=GREEN, alpha=0.15)
-ax.scatter(angles, distances, s=15, color=GREEN)
-ax.text(0.5, -0.15, f"Sweeps: {sweeps}", transform=ax.transAxes, ha="center", color=GREEN)
 
 # Save the data to a CSV file
 filename = f"sonar_data_{datetime.now().strftime('%H_%M_%S')}.csv"
