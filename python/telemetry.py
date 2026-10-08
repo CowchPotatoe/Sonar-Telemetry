@@ -4,6 +4,7 @@ import time
 # For Plotting
 import matplotlib.pyplot as plt
 import numpy as np
+import csv
 from datetime import datetime
 
 # Serial port connected to the ATmega32PB
@@ -40,8 +41,10 @@ previous_angle = None
 # Wait for the first angle of the sweep
 started = False
 
+# Arrays to hold angles and distances for plotting and saving to CSV
 angles = []
 distances = []
+rows = []
 
 # Telemetry statistics
 measurements = 0
@@ -53,7 +56,7 @@ plt.ion() # Interactive mode so we can see plotting in real-time
 
 # Create a single polar plot for the sonar sweep
 ax = plt.subplot(111, projection ="polar")
-ax.set_title(f"180 Degree Sonar Sweep - {datetime.now().strftime('%H:%M:%S')}")
+ax.set_title(f"180 Degree Sonar Sweep - {datetime.now().strftime('%H_%M_%S')}")
 
 while sweeps < MAX_SWEEPS:
 
@@ -78,11 +81,12 @@ while sweeps < MAX_SWEEPS:
         last_angle = angle
         last_distance = distance
         measurements += 1
-
+        
         # Do not append invalid distance measurements
         if distance != 999:
             angles.append(np.radians(angle))  # Convert angle to radians for polar plot
             distances.append(distance)        # Append the distance into the array
+            rows.append([sweeps + 1, angle, distance])
         else:
             invalid_measurements += 1
 
@@ -116,6 +120,19 @@ ax.text(
     transform=ax.transAxes,
     ha="center"
 )
+ax.tight_layout()  # Do not cutoff bottom text
+
+
+# Save the data to a CSV file
+filename = f"sonar_data_{datetime.now().strftime('%H_%M_%S')}.csv"
+with open(filename, mode='w', newline='') as file:
+    writer = csv.writer(file)
+    writer.writerow(["Sweep", "Angle (degrees)", "Distance (cm)"])
+    writer.writerows(rows)
+
+# Save the plot ass an image
+pic_name = f"sonar_plot_{datetime.now().strftime('%H_%M_%S')}.png"
+plt.savefig(pic_name, bbox_inches='tight')
 
 # Display final telemetry dashboard
 print("\n================================")
