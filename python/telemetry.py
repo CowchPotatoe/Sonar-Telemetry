@@ -120,7 +120,7 @@ ax.text(
     transform=ax.transAxes,
     ha="center"
 )
-ax.tight_layout()  # Do not cutoff bottom text
+plt.tight_layout()  # Do not cutoff bottom text
 
 
 # Save the data to a CSV file
