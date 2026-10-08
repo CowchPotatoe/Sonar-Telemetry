@@ -62,11 +62,17 @@ plt.ion() # Interactive mode so we can see plotting in real-time
 fig = plt.figure(facecolor="black")
 ax = fig.add_subplot(111, projection="polar", facecolor="black")
 
-ax.set_title(f"180 Degree Sonar Sweep - {datetime.now().strftime('%H_%M_%S')}", color=GREEN)
+title_time = datetime.now().strftime('%H_%M_%S')
+start = time.time()
+
+ax.set_title(f"180 Degree Sonar Sweep - {title_time}", color=GREEN)
 ax.grid(True, color=DIM_GREEN)
 ax.tick_params(colors=GREEN)                 # angle and distance labels
 for spine in ax.spines.values():
     spine.set_color(GREEN)                   # outline of the half circle
+
+print("Starting telemetry...")
+print(f"Starting time: {title_time}\n")
 
 while sweeps < MAX_SWEEPS:
 
@@ -103,7 +109,7 @@ while sweeps < MAX_SWEEPS:
         # A sweep is complete when the servo returns to 0 degrees.
         if previous_angle == 5 and angle == 0:
             sweeps += 1
-            print("Completed sweep:", sweeps)
+            print(f"Completed sweep: {sweeps}\n")
 
             # Stop after the requested number of sweeps
             if sweeps == MAX_SWEEPS:
@@ -111,6 +117,9 @@ while sweeps < MAX_SWEEPS:
                 break
 
         previous_angle = angle
+print(f"Ending time: {datetime.now().strftime('%H_%M_%S')}")
+print(f"Ending telemetry...\n")
+end = time.time()
 
 # Close the serial connection
 ser.close()
@@ -134,6 +143,7 @@ ax.text(
 )
 plt.tight_layout()  # Do not cutoff bottom text
 
+print(f"Export data to CSV and Images")
 
 # Save the data to a CSV file
 filename = f"sonar_data_{datetime.now().strftime('%H_%M_%S')}.csv"
@@ -159,6 +169,7 @@ print(f"Invalid:       {invalid_measurements}")
 print(f"Minimum:       {min(distances)} cm")
 print(f"Maximum:       {max(distances)} cm")
 print(f"Average:       {sum(distances) / len(distances):.0f} cm")
+print(f"Time Elapsed:  {end - start:.1f} seconds")
 print("================================")
 
 plt.show() # Keep the graph on the screen
