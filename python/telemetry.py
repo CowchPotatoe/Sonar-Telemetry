@@ -130,7 +130,7 @@ ax.text(
     f"Sweeps: {sweeps}",
     transform=ax.transAxes,
     ha="center",
-    
+    color = GREEN
 )
 plt.tight_layout()  # Do not cutoff bottom text
 
