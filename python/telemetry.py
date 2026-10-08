@@ -14,6 +14,10 @@ BAUD_RATE = 9600
 # Number of complete sweeps to receive
 MAX_SWEEPS = 3
 
+# Colors for the plot
+GREEN = "#00ff41"       # bright radar green
+DIM_GREEN = "#0a5c1f"   # darker green for the grid
+
 # Open serial connection
 ser = serial.Serial(SERIAL_PORT, BAUD_RATE)
 
@@ -55,8 +59,14 @@ last_distance = 0
 plt.ion() # Interactive mode so we can see plotting in real-time
 
 # Create a single polar plot for the sonar sweep
-ax = plt.subplot(111, projection ="polar")
-ax.set_title(f"180 Degree Sonar Sweep - {datetime.now().strftime('%H_%M_%S')}")
+fig = plt.figure(facecolor="black")
+ax = fig.add_subplot(111, projection="polar", facecolor="black")
+
+ax.set_title(f"180 Degree Sonar Sweep - {datetime.now().strftime('%H_%M_%S')}", color=GREEN)
+ax.grid(True, color=DIM_GREEN)
+ax.tick_params(colors=GREEN)                 # angle and distance labels
+for spine in ax.spines.values():
+    spine.set_color(GREEN)                   # outline of the half circle
 
 while sweeps < MAX_SWEEPS:
 
@@ -122,6 +132,10 @@ ax.text(
 )
 plt.tight_layout()  # Do not cutoff bottom text
 
+# Changes color of the points to green
+ax.scatter(angles, distances, s=90, color=GREEN, alpha=0.15)
+ax.scatter(angles, distances, s=15, color=GREEN)
+ax.text(0.5, -0.15, f"Sweeps: {sweeps}", transform=ax.transAxes, ha="center", color=GREEN)
 
 # Save the data to a CSV file
 filename = f"sonar_data_{datetime.now().strftime('%H_%M_%S')}.csv"
@@ -132,7 +146,7 @@ with open(filename, mode='w', newline='') as file:
 
 # Save the plot ass an image
 pic_name = f"sonar_plot_{datetime.now().strftime('%H_%M_%S')}.png"
-plt.savefig(pic_name, bbox_inches='tight')
+plt.savefig(pic_name, bbox_inches="tight", facecolor=fig.get_facecolor())
 
 # Display final telemetry dashboard
 print("\n================================")
