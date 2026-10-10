@@ -2,24 +2,22 @@ import serial
 import time
 
 # For Plotting
-import matplotlib.pyplot as plt
 import numpy as np
 import csv
 from datetime import datetime
 
-# Serial port connected to the ATmega32PB
+# Connect to the dashboard
+from dashboard import SonarDashboard
+
+# Serial port connected to the ATmega328PB
 SERIAL_PORT = "/dev/ttyACM0"
 BAUD_RATE = 9600
 
 # Number of complete sweeps to receive
 MAX_SWEEPS = 3
 
-# Colors for the plot
-GREEN = "#00ff41"       # bright radar green
-DIM_GREEN = "#0a5c1f"   # darker green for the grid
-
 # Open serial connection
-ser = serial.Serial(SERIAL_PORT, BAUD_RATE)
+ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=0.1)
 
 # Give the serial connection time to initialize
 time.sleep(2)
@@ -27,14 +25,8 @@ time.sleep(2)
 # Clear old data from the serial buffer
 ser.reset_input_buffer()
 
-print("Connected to ATmega32PB")
+print("Connected to ATmega328PB")
 print("Waiting for telemetry...\n")
-
-# Stop first in case it was running
-ser.write(b"X\n")
-
-# Send start command to ATmega
-ser.write(b"S\n")
 
 # Count complete sweeps
 sweeps = 0
@@ -45,9 +37,10 @@ previous_angle = None
 # Wait for the first angle of the sweep
 started = False
 
-# Arrays to hold angles and distances for plotting and saving to CSV
+# Arrays to hold angles, distances, and times
 angles = []
 distances = []
+times = []
 rows = []
 
 # Telemetry statistics
@@ -56,42 +49,44 @@ invalid_measurements = 0
 last_angle = 0
 last_distance = 0
 
-plt.ion() # Interactive mode so we can see plotting in real-time
-
-# Create a single polar plot for the sonar sweep
-fig = plt.figure(facecolor="black")
-ax = fig.add_subplot(111, projection="polar", facecolor="black")
-
 title_time = datetime.now().strftime('%H_%M_%S')
 start = time.time()
 
-ax.set_title(f"180 Degree Sonar Sweep - {title_time}", color=GREEN)
-ax.grid(True, color=DIM_GREEN)
-ax.tick_params(colors=GREEN)                 # angle and distance labels
-for spine in ax.spines.values():
-    spine.set_color(GREEN)                   # outline of the half circle
+# Create the dashboard
+dashboard = SonarDashboard(title_time)
 
 print("Starting telemetry...")
 print(f"Starting time: {title_time}\n")
 
-while sweeps < MAX_SWEEPS:
+# Send start command to ATmega
+# Do not send X first because the firmware may exit when it receives X
+ser.write(b"S\n")
+
+while sweeps < MAX_SWEEPS and dashboard.is_open():
 
     # Read one line from the ATmega
-    line = ser.readline().decode("utf-8").strip()
+    line = ser.readline().decode("utf-8", errors="ignore").strip()
 
     if line:
-        # Get the angle
-        angle = int(line.split(",")[0].split(":")[1])
+        try:
+            # Separate the angle and distance
+            angle_part, distance_part = line.split(",")
+
+            # Get the numbers
+            angle = int(angle_part.replace("Angle:", "").strip())
+            distance = int(distance_part.replace("Distance:", "").strip())
+
+        except ValueError:
+            continue
 
         # Wait until the servo is at 0 degrees before recording data
         if not started:
             if angle != 0:
                 continue
+
             started = True
 
         print(line)
-
-        distance = int(line.split(",")[1].split(":")[1])
 
         # Keep track of the latest measurement
         last_angle = angle
@@ -101,57 +96,75 @@ while sweeps < MAX_SWEEPS:
         # Record timestamp and validity for every measurement
         elapsed_time = time.time() - start
         valid = distance != 999
-        rows.append([round(elapsed_time, 3), sweeps + 1, angle, distance, valid])
+
+        rows.append([
+            round(elapsed_time, 3),
+            sweeps + 1,
+            angle,
+            distance,
+            valid
+        ])
 
         # Do not plot invalid distance measurements
         if valid:
-            angles.append(np.radians(angle))  # Convert angle to radians for polar plot
-            distances.append(distance)        # Append the distance into the array
+            angles.append(np.radians(angle))
+            distances.append(distance)
+            times.append(elapsed_time)
         else:
             invalid_measurements += 1
 
-        # A sweep is complete when the servo returns to 0 degrees.
+        # A sweep is complete when the servo returns to 0 degrees
         if previous_angle == 5 and angle == 0:
             sweeps += 1
             print(f"Completed sweep: {sweeps}\n")
 
-            # Stop after the requested number of sweeps
-            if sweeps == MAX_SWEEPS:
-                ser.write(b"X\n")
-                break
-
         previous_angle = angle
 
+    # Update the dashboard with the latest data
+    dashboard.update(
+        angles=angles,
+        distances=distances,
+        times=times,
+        sweeps=sweeps,
+        max_sweeps=MAX_SWEEPS,
+        last_angle=last_angle,
+        last_distance=last_distance,
+        measurements=measurements,
+        invalid_measurements=invalid_measurements,
+        elapsed_seconds=time.time() - start,
+        connected=ser.is_open
+    )
+
 print(f"Ending time: {datetime.now().strftime('%H_%M_%S')}")
-print(f"Ending telemetry...\n")
+print("Ending telemetry...\n")
+
 end = time.time()
 
-# Close the serial connection
-ser.close()
-plt.ioff()
+# Stop the ATmega and close the serial connection
+if ser.is_open:
+    ser.write(b"X\n")
+    ser.close()
 
-# Set the limits for the polar plot
-ax.set_thetamin(0)
-ax.set_thetamax(180)
-
-# Changes color of the points to green
-ax.scatter(angles, distances, s=90, color=GREEN, alpha=0.15)
-ax.scatter(angles, distances, s=15, color=GREEN)
-
-# Display the number of completed sweeps at the bottom
-ax.text(
-    0.5, -0.15,
-    f"Sweeps: {sweeps}",
-    transform=ax.transAxes,
-    ha="center",
-    color=GREEN
+# Update the dashboard connection status
+dashboard.update(
+    angles=angles,
+    distances=distances,
+    times=times,
+    sweeps=sweeps,
+    max_sweeps=MAX_SWEEPS,
+    last_angle=last_angle,
+    last_distance=last_distance,
+    measurements=measurements,
+    invalid_measurements=invalid_measurements,
+    elapsed_seconds=end - start,
+    connected=False
 )
-plt.tight_layout()  # Do not cutoff bottom text
 
-print("Export data to CSV and Images")
+print("Export data to CSV and image")
 
 # Save the data to a CSV file
 filename = f"sonar_data_{datetime.now().strftime('%H_%M_%S')}.csv"
+
 with open(filename, mode='w', newline='') as file:
     writer = csv.writer(file)
     writer.writerow([
@@ -163,20 +176,19 @@ with open(filename, mode='w', newline='') as file:
     ])
     writer.writerows(rows)
 
-# Save the plot as an image
+# Save the dashboard as an image
 pic_name = f"sonar_plot_{datetime.now().strftime('%H_%M_%S')}.png"
-plt.savefig(pic_name, bbox_inches="tight", facecolor=fig.get_facecolor())
+dashboard.save(pic_name)
 
-# Display final telemetry dashboard
+# Display final telemetry summary
 print("\n================================")
 print("       SONAR TELEMETRY")
 print("================================")
 print("Connection:    DISCONNECTED")
 print(f"Sweep:         {sweeps} / {MAX_SWEEPS}")
-print(f"Angle:         {last_angle}°")
-print(f"Distance:      {last_distance} cm")
 print(f"Measurements:  {measurements}")
 print(f"Invalid:       {invalid_measurements}")
+
 if distances:
     print(f"Minimum:       {min(distances)} cm")
     print(f"Maximum:       {max(distances)} cm")
@@ -189,5 +201,10 @@ else:
 print(f"Time Elapsed:  {end - start:.1f} seconds")
 print("================================")
 
-plt.show() # Keep the graph on the screen
+print(f"\nCSV saved as: {filename}")
+print(f"Dashboard saved as: {pic_name}")
+
+# Keep the dashboard on the screen
+dashboard.show()
+
 print("\nTelemetry stopped.")
