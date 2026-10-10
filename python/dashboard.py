@@ -1,7 +1,7 @@
-
 import matplotlib.pyplot as plt
 
 GREEN = "#00ff41"
+RED = "#ff4444"
 DIM_GREEN = "#0a5c1f"
 BLACK = "black"
 
@@ -73,9 +73,27 @@ class SonarDashboard:
         )
         self.ax_info.axis("off")
 
-        # One text area makes the statistics easier to manage.
+        # Connection status
+        self.status_text = self.ax_info.text(
+            0.02, 0.98, "",
+            color=GREEN,
+            fontsize=10,
+            family="monospace",
+            verticalalignment="top"
+        )
+
+        # Current distance
+        self.distance_text = self.ax_info.text(
+            0.02, 0.82, "",
+            color=GREEN,
+            fontsize=10,
+            family="monospace",
+            verticalalignment="top"
+        )
+
+        # Other statistics
         self.info_text = self.ax_info.text(
-            0.02, 0.90, "",
+            0.02, 0.68, "",
             color=GREEN,
             fontsize=10,
             family="monospace",
@@ -132,11 +150,21 @@ class SonarDashboard:
                 0, max(50, max(distances) * 1.1)
             )
 
-        # Show the most recent distance.
-        if last_distance == 999:
-            distance = "No echo"
+        # Show the connection status
+        if connected:
+            self.status_text.set_text("Connection: CONNECTED")
+            self.status_text.set_color(GREEN)
         else:
-            distance = f"{last_distance} cm"
+            self.status_text.set_text("Connection: DISCONNECTED")
+            self.status_text.set_color(RED)
+
+        # Show the most recent distance
+        if last_distance == 999:
+            self.distance_text.set_text("Distance: NO ECHO/INVALID")
+            self.distance_text.set_color(RED)
+        else:
+            self.distance_text.set_text(f"Distance: {last_distance} cm")
+            self.distance_text.set_color(GREEN)
 
         # Calculate statistics from valid readings only.
         if distances:
@@ -148,17 +176,15 @@ class SonarDashboard:
             maximum = "--"
             average = "--"
 
-        # Update all the displayed information at once.
+        # Update the remaining statistics.
         self.info_text.set_text(
-            f"Connection: {('CONNECTED' if connected else 'DISCONNECTED')}\n\n"
             f"Sweep:        {sweeps} / {max_sweeps}\n"
             f"Angle:        {last_angle} degrees\n"
-            f"Distance:     {distance}\n\n"
             f"Measurements: {measurements}\n"
-            f"Invalid:      {invalid_measurements}\n\n"
+            f"Invalid:      {invalid_measurements}\n"
             f"Minimum:      {minimum}\n"
             f"Maximum:      {maximum}\n"
-            f"Average:      {average}\n\n"
+            f"Average:      {average}\n"
             f"Elapsed:      {elapsed_seconds:.1f} s"
         )
 
