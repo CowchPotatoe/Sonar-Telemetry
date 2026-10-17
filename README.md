@@ -18,5 +18,5 @@ A Python script reads the serial port and plots each point on a polar graph as i
 
 ### Contributors
 
-- **Ivan Chen** ([@CowchPotatoe](github.com/CowchPotatoe/))
+- **Ivan Chen** ([@CowchPotatoe](https://github.com/CowchPotatoe/))
 - **Isaac Chen** ([@ChipperPotato](https://github.com/ChipperPotato/))
